@@ -1,4 +1,4 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Buffers.Binary;
 using System.Text;
 
 namespace AresChroniclesDumper;
@@ -10,23 +10,13 @@ public static class StreamExtensions
     public static uint ReadUInt32BE(this Stream stream)
     {
         stream.Read(Buffer, 0, 4);
-        var value = Unsafe.ReadUnaligned<uint>(ref Buffer[0]);
-
-        if (BitConverter.IsLittleEndian)
-            return SwapEndian(value);
-        else
-            return value;
+        return BinaryPrimitives.ReadUInt32BigEndian(Buffer);
     }
 
     public static ulong ReadUInt64BE(this Stream stream)
     {
         stream.Read(Buffer, 0, 8);
-        var value = Unsafe.ReadUnaligned<ulong>(ref Buffer[0]);
-
-        if (BitConverter.IsLittleEndian)
-            return SwapEndian(value);
-        else
-            return value;
+        return BinaryPrimitives.ReadUInt64BigEndian(Buffer);
     }
 
     public static string ReadCString(this Stream stream)
@@ -40,19 +30,13 @@ public static class StreamExtensions
 
     public static void WriteUInt32BE(this Stream stream, uint value)
     {
-        if (BitConverter.IsLittleEndian)
-            value = SwapEndian(value);
-
-        Unsafe.WriteUnaligned(ref Buffer[0], value);
+        BinaryPrimitives.WriteUInt32BigEndian(Buffer, value);
         stream.Write(Buffer, 0, 4);
     }
 
     public static void WriteUInt64BE(this Stream stream, ulong value)
     {
-        if (BitConverter.IsLittleEndian)
-            value = SwapEndian(value);
-
-        Unsafe.WriteUnaligned(ref Buffer[0], value);
+        BinaryPrimitives.WriteUInt64BigEndian(Buffer, value);
         stream.Write(Buffer, 0, 8);
     }
 
@@ -65,18 +49,5 @@ public static class StreamExtensions
         }
 
         stream.WriteByte(0);
-    }
-
-    private static uint SwapEndian(uint x)
-    {
-        x = (x >> 16) | (x << 16);
-        return ((x & 0xFF00FF00) >> 8) | ((x & 0x00FF00FF) << 8);
-    }
-
-    private static ulong SwapEndian(ulong x)
-    {
-        x = (x >> 32) | (x << 32);
-        x = ((x & 0xFFFF0000FFFF0000) >> 16) | ((x & 0x0000FFFF0000FFFF) << 16);
-        return ((x & 0xFF00FF00FF00FF00) >> 8) | ((x & 0x00FF00FF00FF00FF) << 8);
     }
 }
